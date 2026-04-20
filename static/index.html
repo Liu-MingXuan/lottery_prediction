@@ -26,7 +26,7 @@
         </div>
 
         <!-- 历史开奖 -->
-        <div class="panel">
+        <div class="panel" id="panel-history">
             <h2>历史开奖记录</h2>
             <div class="tabs">
                 <button class="tab active" onclick="loadHistory('ssq', this)">双色球</button>
@@ -43,13 +43,41 @@
         </div>
 
         <!-- 号码概率 -->
-        <div class="panel">
+        <div class="panel" id="panel-prob">
             <h2>号码概率总表</h2>
             <div class="tabs">
                 <button class="tab active" onclick="loadProb('ssq', this)">双色球</button>
                 <button class="tab" onclick="loadProb('dlt', this)">大乐透</button>
             </div>
             <div id="prob-table"></div>
+        </div>
+
+        <!-- 号码查询 -->
+        <div class="panel" id="panel-check">
+            <h2>号码查询</h2>
+            <div class="tabs">
+                <button class="tab active" onclick="setCheckType('ssq', this)">双色球</button>
+                <button class="tab" onclick="setCheckType('dlt', this)">大乐透</button>
+            </div>
+            <div class="check-form">
+                <div class="input-row">
+                    <label id="label-main">红球号码（6个）：</label>
+                    <input type="text" id="check-main" placeholder="例如: 01 05 12 23 30 33">
+                </div>
+                <div class="input-row">
+                    <label id="label-bonus">蓝球号码：</label>
+                    <input type="text" id="check-bonus" placeholder="例如: 07">
+                </div>
+                <div class="check-buttons">
+                    <button onclick="checkHistory()">查询历史匹配</button>
+                    <button onclick="checkPrize()">计算中奖等级</button>
+                </div>
+            </div>
+            <div id="check-result"></div>
+
+            <!-- 奖级表 -->
+            <h3 style="margin-top:16px;font-size:14px;">奖级表</h3>
+            <div id="prize-table"></div>
         </div>
     </div>
 
