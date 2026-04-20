@@ -34,16 +34,12 @@ def calc_penalty(candidate_numbers, freq, total_draws):
     return penalty
 
 
-def greedy_select(prob, freq, total_draws, count, exclude=None):
+def greedy_select(prob, freq, total_draws, count, prev_combos=None):
     """
-    贪心选号：综合考虑个体概率和子组合惩罚。
-    exclude: 需要排除的号码集合（已在前几组中选用）
+    贪心选号：综合考虑个体概率、历史子组合惩罚和已选组合去重惩罚。
+    prev_combos: 前几组已选的号码组合列表，用于增加重复惩罚
     """
-    exclude = exclude or set()
-    pool = [
-        (n, p) for n, p in sorted(prob.items(), key=lambda x: x[1], reverse=True)
-        if n not in exclude
-    ][:CANDIDATE_POOL_SIZE]
+    pool = sorted(prob.items(), key=lambda x: x[1], reverse=True)[:CANDIDATE_POOL_SIZE]
     selected = []
     remaining = list(pool)
 
@@ -53,7 +49,13 @@ def greedy_select(prob, freq, total_draws, count, exclude=None):
 
         for i, (num, p) in enumerate(remaining):
             test_set = [n for n, _ in selected] + [num]
+            # 历史子组合惩罚
             penalty = calc_penalty(test_set, freq, total_draws)
+            # 与前几组的重复惩罚：重叠号码越多惩罚越大
+            if prev_combos:
+                for combo in prev_combos:
+                    overlap = len(set(test_set) & set(combo))
+                    penalty += overlap * 0.05
             score = p - penalty
             if score > best_score:
                 best_score = score
@@ -87,14 +89,13 @@ def predict_ssq(combo_count=5):
     blues_sorted = sorted(bonus_prob.items(), key=lambda x: x[1], reverse=True)
 
     results = []
-    used_reds = set()
+    prev_red_combos = []
 
     for i in range(combo_count):
-        # 贪心选红球，排除已选号码
-        reds = greedy_select(main_prob, main_freq, total_draws, 6, exclude=used_reds)
+        # 贪心选红球，传入前几组的组合用于去重
+        reds = greedy_select(main_prob, main_freq, total_draws, 6, prev_combos=prev_red_combos)
         reds_sorted = sorted(reds, key=lambda x: x[0])
 
-        # 选蓝球：每组取排名不同的蓝球
         blue = blues_sorted[i % len(blues_sorted)]
 
         combined_prob = reduce(operator.mul, [p for _, p in reds_sorted]) * blue[1]
@@ -107,8 +108,7 @@ def predict_ssq(combo_count=5):
             "综合概率": combined_prob,
         })
 
-        # 将本组红球加入排除集，保证下一组不重复
-        used_reds.update(n for n, _ in reds_sorted)
+        prev_red_combos.append([n for n, _ in reds_sorted])
 
     return results
 
@@ -132,19 +132,20 @@ def predict_dlt(combo_count=5):
     bonus_freq = build_combination_freq(records, bonus_keys, max_k=2)
     total_draws = len(records)
 
-    # 预生成多组后区候选
-    used_backs = set()
+    # 后区：贪心选多组，用 prev_combos 去重
     back_combos = []
+    prev_back_combos = []
     for _ in range(combo_count):
-        backs = greedy_select(bonus_prob, bonus_freq, total_draws, 2, exclude=used_backs)
-        back_combos.append(sorted(backs, key=lambda x: x[0]))
-        used_backs.update(n for n, _ in backs)
+        backs = greedy_select(bonus_prob, bonus_freq, total_draws, 2, prev_combos=prev_back_combos)
+        backs_sorted = sorted(backs, key=lambda x: x[0])
+        back_combos.append(backs_sorted)
+        prev_back_combos.append([n for n, _ in backs_sorted])
 
     results = []
-    used_fronts = set()
+    prev_front_combos = []
 
     for i in range(combo_count):
-        fronts = greedy_select(main_prob, main_freq, total_draws, 5, exclude=used_fronts)
+        fronts = greedy_select(main_prob, main_freq, total_draws, 5, prev_combos=prev_front_combos)
         fronts_sorted = sorted(fronts, key=lambda x: x[0])
         backs_sorted = back_combos[i]
 
@@ -160,6 +161,6 @@ def predict_dlt(combo_count=5):
             "综合概率": combined_prob,
         })
 
-        used_fronts.update(n for n, _ in fronts_sorted)
+        prev_front_combos.append([n for n, _ in fronts_sorted])
 
     return results
