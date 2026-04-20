@@ -1,0 +1,136 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    line-height: 1.6;
+}
+.container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+h1 { text-align: center; margin-bottom: 24px; color: #1a1a2e; }
+
+.panel {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.panel h2 {
+    font-size: 16px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e8e8e8;
+}
+
+/* 查询表单 */
+.form-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.form-row label { font-size: 14px; }
+.form-row input {
+    width: 80px;
+    padding: 6px 10px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    font-size: 14px;
+}
+#btn-predict {
+    padding: 6px 24px;
+    background: #1677ff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+}
+#btn-predict:hover { background: #4096ff; }
+#btn-predict:disabled { background: #95c0ff; cursor: not-allowed; }
+#status { font-size: 13px; color: #999; }
+
+/* 标签页 */
+.tabs { display: flex; gap: 0; margin-bottom: 12px; }
+.tab {
+    padding: 6px 16px;
+    border: 1px solid #d9d9d9;
+    background: #fff;
+    cursor: pointer;
+    font-size: 13px;
+}
+.tab:first-child { border-radius: 4px 0 0 4px; }
+.tab:last-child { border-radius: 0 4px 4px 0; }
+.tab.active { background: #1677ff; color: #fff; border-color: #1677ff; }
+
+/* 表格 */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+th, td {
+    padding: 6px 8px;
+    border: 1px solid #e8e8e8;
+    text-align: center;
+}
+th { background: #fafafa; font-weight: 600; white-space: nowrap; }
+tr:hover { background: #f5f5f5; }
+td.num-red { color: #cf1322; font-weight: 600; }
+td.num-blue { color: #1677ff; font-weight: 600; }
+
+/* 分页 */
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+}
+.pagination button {
+    padding: 4px 12px;
+    border: 1px solid #d9d9d9;
+    background: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+}
+.pagination button.active { background: #1677ff; color: #fff; border-color: #1677ff; }
+
+/* 预测结果卡片 */
+.prediction-section h3 { font-size: 15px; margin: 16px 0 8px; color: #1a1a2e; }
+.combo-card {
+    display: inline-block;
+    background: #fafbfc;
+    border: 1px solid #e8e8e8;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 4px;
+    min-width: 240px;
+}
+.combo-card .label { font-size: 12px; color: #999; margin-bottom: 4px; }
+.combo-card .balls { font-size: 18px; font-weight: 600; letter-spacing: 2px; }
+.combo-card .balls .red { color: #cf1322; }
+.combo-card .balls .blue { color: #1677ff; }
+.combo-card .prob { font-size: 12px; color: #666; margin-top: 4px; }
+
+.placeholder {
+    text-align: center;
+    color: #bbb;
+    padding: 40px;
+    font-size: 14px;
+}
+
+/* 加载动画 */
+.loading { display: inline-block; }
+.loading::after {
+    content: '';
+    display: inline-block;
+    width: 12px; height: 12px;
+    border: 2px solid #999;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

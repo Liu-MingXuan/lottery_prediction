@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>彩票预测系统</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>彩票预测系统</h1>
+
+        <!-- 查询面板 -->
+        <div class="panel">
+            <h2>查询参数</h2>
+            <div class="form-row">
+                <label>参考历史期数：
+                    <input type="number" id="period" value="0" min="0" placeholder="0=全部">
+                </label>
+                <label>预测组数：
+                    <input type="number" id="count" value="5" min="1" max="20">
+                </label>
+                <button id="btn-predict" onclick="runPredict()">开始预测</button>
+                <span id="status"></span>
+            </div>
+        </div>
+
+        <!-- 历史开奖 -->
+        <div class="panel">
+            <h2>历史开奖记录</h2>
+            <div class="tabs">
+                <button class="tab active" onclick="loadHistory('ssq', this)">双色球</button>
+                <button class="tab" onclick="loadHistory('dlt', this)">大乐透</button>
+            </div>
+            <div id="history-table"></div>
+            <div class="pagination" id="pagination"></div>
+        </div>
+
+        <!-- 预测结果 -->
+        <div class="panel">
+            <h2>预测结果</h2>
+            <div id="predict-result" class="placeholder">点击"开始预测"获取结果</div>
+        </div>
+
+        <!-- 号码概率 -->
+        <div class="panel">
+            <h2>号码概率总表</h2>
+            <div class="tabs">
+                <button class="tab active" onclick="loadProb('ssq', this)">双色球</button>
+                <button class="tab" onclick="loadProb('dlt', this)">大乐透</button>
+            </div>
+            <div id="prob-table"></div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
