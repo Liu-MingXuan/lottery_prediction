@@ -98,20 +98,37 @@ def main():
         print_period_table("大乐透 前区概率", dlt_periods, (1, 35))
         print_bonus_table("大乐透 后区概率", dlt_periods, (1, 12))
 
-    # 预测结果
+    # 预测结果（5组）
     print("\n" + "=" * 50)
-    print("预测结果")
+    print("预测结果（5组推荐）")
     print("=" * 50)
 
-    ssq_result = predict_ssq()
-    dlt_result = predict_dlt()
+    ssq_results = predict_ssq(combo_count=5)
+    dlt_results = predict_dlt(combo_count=5)
 
+    if ssq_results:
+        print("\n【双色球】")
+        for i, r in enumerate(ssq_results, 1):
+            reds = " ".join(r["红区"])
+            blue = r["蓝区"][0]
+            prob = r["综合概率"]
+            print(f"  第{i}组: {reds} + {blue}  (综合概率: {prob:.2e})")
+
+    if dlt_results:
+        print("\n【大乐透】")
+        for i, r in enumerate(dlt_results, 1):
+            fronts = " ".join(r["前区"])
+            backs = " ".join(r["后区"])
+            prob = r["综合概率"]
+            print(f"  第{i}组: {fronts} + {backs}  (综合概率: {prob:.2e})")
+
+    # 详细概率数据
+    print("\n--- 详细概率数据 ---")
     result = {}
-    if ssq_result:
-        result["双色球"] = ssq_result
-    if dlt_result:
-        result["大乐透"] = dlt_result
-
+    if ssq_results:
+        result["双色球"] = ssq_results
+    if dlt_results:
+        result["大乐透"] = dlt_results
     print(json.dumps(result, ensure_ascii=False, indent=4))
 
 

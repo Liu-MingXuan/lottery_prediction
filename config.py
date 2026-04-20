@@ -26,7 +26,7 @@ RECENT_PERIODS = 100
 ANALYSIS_PERIODS = [10, 50, 100]
 
 # 预测使用的最近期数（只取最近 N 期作为预测基础）
-PREDICTION_SPAN = 10
+PREDICTION_SPAN = 1000
 
 # 子组合惩罚权重：组合越大惩罚越重
 COMBO_PENALTY_WEIGHTS = {2: 1, 3: 2, 4: 3, 5: 4, 6: 5}
