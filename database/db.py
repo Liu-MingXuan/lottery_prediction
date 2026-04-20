@@ -27,6 +27,20 @@ def init_db():
             back1 INTEGER, back2 INTEGER
         )
     """)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS ssq_probability (
+            number INTEGER PRIMARY KEY,
+            red_prob REAL,
+            blue_prob REAL
+        )
+    """)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dlt_probability (
+            number INTEGER PRIMARY KEY,
+            front_prob REAL,
+            back_prob REAL
+        )
+    """)
     conn.commit()
     conn.close()
 
@@ -89,3 +103,29 @@ def get_all_dlt():
     rows = c.fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+
+def save_ssq_probability(records):
+    """保存双色球每个号码的红区/蓝区概率"""
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("DELETE FROM ssq_probability")
+    c.executemany(
+        "INSERT INTO ssq_probability (number, red_prob, blue_prob) VALUES (?, ?, ?)",
+        records,
+    )
+    conn.commit()
+    conn.close()
+
+
+def save_dlt_probability(records):
+    """保存大乐透每个号码的前区/后区概率"""
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("DELETE FROM dlt_probability")
+    c.executemany(
+        "INSERT INTO dlt_probability (number, front_prob, back_prob) VALUES (?, ?, ?)",
+        records,
+    )
+    conn.commit()
+    conn.close()

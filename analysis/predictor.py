@@ -3,11 +3,12 @@ from collections import defaultdict
 from functools import reduce
 import operator
 
-from config import (
-    PREDICTION_SPAN, COMBO_PENALTY_WEIGHTS, CANDIDATE_POOL_SIZE,
-)
+from config import COMBO_PENALTY_WEIGHTS, CANDIDATE_POOL_SIZE
 from analysis.analyzer import analyze
-from database.db import get_all_ssq, get_all_dlt
+from database.db import (
+    get_all_ssq, get_all_dlt,
+    save_ssq_probability, save_dlt_probability,
+)
 
 
 def build_combination_freq(records, keys, max_k):
@@ -49,9 +50,7 @@ def greedy_select(prob, freq, total_draws, count, prev_combos=None):
 
         for i, (num, p) in enumerate(remaining):
             test_set = [n for n, _ in selected] + [num]
-            # 历史子组合惩罚
             penalty = calc_penalty(test_set, freq, total_draws)
-            # 与前几组的重复惩罚：重叠号码越多惩罚越大
             if prev_combos:
                 for combo in prev_combos:
                     overlap = len(set(test_set) & set(combo))
@@ -67,7 +66,7 @@ def greedy_select(prob, freq, total_draws, count, prev_combos=None):
     return selected
 
 
-def predict_ssq(combo_count=5):
+def predict_ssq(combo_count=5, prediction_span=None):
     """双色球预测：生成 combo_count 组推荐号码"""
     records = get_all_ssq()
     if not records:
@@ -79,20 +78,29 @@ def predict_ssq(combo_count=5):
     main_range = (1, 33)
     bonus_range = (1, 16)
 
-    subset = records[-PREDICTION_SPAN:] if len(records) >= PREDICTION_SPAN else records
+    # prediction_span: 0 表示使用全部历史，否则使用最近 N 期
+    if prediction_span and prediction_span > 0:
+        subset = records[-prediction_span:] if len(records) >= prediction_span else records
+    else:
+        subset = records
+
     main_prob, bonus_prob = analyze(subset, main_keys, bonus_keys, main_range, bonus_range)
+
+    # 保存概率到数据库
+    prob_rows = []
+    for num in range(1, 34):
+        prob_rows.append((num, round(main_prob.get(num, 0), 6), round(bonus_prob.get(num, 0), 6)))
+    save_ssq_probability(prob_rows)
 
     main_freq = build_combination_freq(records, main_keys, max_k=6)
     total_draws = len(records)
 
-    # 蓝球按概率排序，每组取不同的蓝球
     blues_sorted = sorted(bonus_prob.items(), key=lambda x: x[1], reverse=True)
 
     results = []
     prev_red_combos = []
 
     for i in range(combo_count):
-        # 贪心选红球，传入前几组的组合用于去重
         reds = greedy_select(main_prob, main_freq, total_draws, 6, prev_combos=prev_red_combos)
         reds_sorted = sorted(reds, key=lambda x: x[0])
 
@@ -113,7 +121,7 @@ def predict_ssq(combo_count=5):
     return results
 
 
-def predict_dlt(combo_count=5):
+def predict_dlt(combo_count=5, prediction_span=None):
     """大乐透预测：生成 combo_count 组推荐号码"""
     records = get_all_dlt()
     if not records:
@@ -125,14 +133,23 @@ def predict_dlt(combo_count=5):
     main_range = (1, 35)
     bonus_range = (1, 12)
 
-    subset = records[-PREDICTION_SPAN:] if len(records) >= PREDICTION_SPAN else records
+    if prediction_span and prediction_span > 0:
+        subset = records[-prediction_span:] if len(records) >= prediction_span else records
+    else:
+        subset = records
+
     main_prob, bonus_prob = analyze(subset, main_keys, bonus_keys, main_range, bonus_range)
+
+    # 保存概率到数据库
+    prob_rows = []
+    for num in range(1, 36):
+        prob_rows.append((num, round(main_prob.get(num, 0), 6), round(bonus_prob.get(num, 0), 6)))
+    save_dlt_probability(prob_rows)
 
     main_freq = build_combination_freq(records, main_keys, max_k=5)
     bonus_freq = build_combination_freq(records, bonus_keys, max_k=2)
     total_draws = len(records)
 
-    # 后区：贪心选多组，用 prev_combos 去重
     back_combos = []
     prev_back_combos = []
     for _ in range(combo_count):

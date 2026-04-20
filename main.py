@@ -1,5 +1,6 @@
+import argparse
 import json
-from database.db import init_db, get_all_ssq, get_all_dlt
+from database.db import init_db, get_all_ssq, get_all_dlt, get_conn
 from crawler.ssq import crawl_ssq
 from crawler.dlt import crawl_dlt
 from analysis.analyzer import multi_period_analysis
@@ -7,7 +8,6 @@ from analysis.predictor import predict_ssq, predict_dlt
 
 
 def print_period_table(title, period_data, num_range):
-    """打印多历史阶段概率表格"""
     periods = list(period_data.keys())
     header = f"{'号码':>4}"
     for p in periods:
@@ -27,7 +27,6 @@ def print_period_table(title, period_data, num_range):
         print(row)
 
     print(separator)
-    # 合计行
     row = "合计 "
     for p in periods:
         main_prob, _ = period_data[p]
@@ -37,7 +36,6 @@ def print_period_table(title, period_data, num_range):
 
 
 def print_bonus_table(title, period_data, num_range):
-    """打印副区（蓝区/后区）概率表格"""
     periods = list(period_data.keys())
     header = f"{'号码':>4}"
     for p in periods:
@@ -65,10 +63,43 @@ def print_bonus_table(title, period_data, num_range):
     print(row)
 
 
+def print_prob_table(title, prob_records, main_col, bonus_col):
+    """打印数据库中的概率表格"""
+    header = f"{'号码':>4} | {main_col:>10} | {bonus_col:>10}"
+    separator = "-" * len(header)
+
+    print(f"\n{'=' * 20} {title} {'=' * 20}")
+    print(header)
+    print(separator)
+
+    for r in prob_records:
+        num = r[0]
+        main_val = r[1]
+        bonus_val = r[2]
+        row = f"{num:02d}  | {main_val:>10.6f} | {bonus_val:>10.6f}"
+        print(row)
+
+    print(separator)
+
+
 def main():
+    parser = argparse.ArgumentParser(description="彩票预测系统")
+    parser.add_argument(
+        "-p", "--period", type=int, default=0,
+        help="参考最近 N 期历史记录，0 表示参考全部历史（默认: 0）",
+    )
+    parser.add_argument(
+        "-c", "--count", type=int, default=5,
+        help="输出预测号码的组数（默认: 5）",
+    )
+    args = parser.parse_args()
+
+    period_label = "全部历史" if args.period == 0 else f"最近{args.period}期"
+
     init_db()
     print("=" * 50)
     print("彩票预测系统")
+    print(f"参考历史: {period_label} | 预测组数: {args.count}")
     print("=" * 50)
 
     # 爬取数据
@@ -98,13 +129,13 @@ def main():
         print_period_table("大乐透 前区概率", dlt_periods, (1, 35))
         print_bonus_table("大乐透 后区概率", dlt_periods, (1, 12))
 
-    # 预测结果（5组）
-    print("\n" + "=" * 50)
-    print("预测结果（5组推荐）")
+    # 预测结果
+    print(f"\n{'=' * 50}")
+    print(f"预测结果（{args.count}组推荐）")
     print("=" * 50)
 
-    ssq_results = predict_ssq(combo_count=5)
-    dlt_results = predict_dlt(combo_count=5)
+    ssq_results = predict_ssq(combo_count=args.count, prediction_span=args.period)
+    dlt_results = predict_dlt(combo_count=args.count, prediction_span=args.period)
 
     if ssq_results:
         print("\n【双色球】")
@@ -121,6 +152,20 @@ def main():
             backs = " ".join(r["后区"])
             prob = r["综合概率"]
             print(f"  第{i}组: {fronts} + {backs}  (综合概率: {prob:.2e})")
+
+    # 打印数据库中的概率表
+    print(f"\n{'=' * 50}")
+    print("号码概率总表")
+    print("=" * 50)
+
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT * FROM ssq_probability ORDER BY number ASC")
+    print_prob_table("双色球 号码概率", c.fetchall(), "红区", "蓝区")
+
+    c.execute("SELECT * FROM dlt_probability ORDER BY number ASC")
+    print_prob_table("大乐透 号码概率", c.fetchall(), "前区", "后区")
+    conn.close()
 
     # 详细概率数据
     print("\n--- 详细概率数据 ---")
