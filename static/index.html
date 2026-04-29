@@ -42,6 +42,59 @@
             <div id="predict-result" class="placeholder">点击"开始预测"获取结果</div>
         </div>
 
+        <!-- 号码分析 -->
+        <div class="panel" id="panel-analysis">
+            <h2>号码分析</h2>
+            <div class="form-row" style="margin-bottom:12px;">
+                <label>参考历史期数：
+                    <input type="number" id="analysis-period" value="0" min="0" placeholder="0=全部">
+                </label>
+                <button id="btn-analysis" onclick="runAnalysis()">分析</button>
+                <span id="analysis-status"></span>
+            </div>
+            <div class="tabs">
+                <button class="tab active" onclick="switchAnalysisType('ssq', this)">双色球</button>
+                <button class="tab" onclick="switchAnalysisType('dlt', this)">大乐透</button>
+            </div>
+
+            <!-- 热力图 -->
+            <h3 class="section-title">号码热力图</h3>
+            <div id="heatmap-main" class="heatmap"></div>
+            <div id="heatmap-bonus" class="heatmap" style="margin-top:8px;"></div>
+
+            <!-- 概率排行 -->
+            <h3 class="section-title">中奖概率排行（降序）</h3>
+            <div class="dual-table">
+                <div>
+                    <div class="table-label" id="prob-main-label">前区</div>
+                    <div id="prob-ranking-main"></div>
+                </div>
+                <div>
+                    <div class="table-label" id="prob-bonus-label">后区</div>
+                    <div id="prob-ranking-bonus"></div>
+                </div>
+            </div>
+
+            <!-- 遗漏排行 -->
+            <h3 class="section-title">遗漏期数排行（降序）</h3>
+            <div class="dual-table">
+                <div>
+                    <div class="table-label" id="miss-main-label">前区</div>
+                    <div id="miss-ranking-main"></div>
+                </div>
+                <div>
+                    <div class="table-label" id="miss-bonus-label">后区</div>
+                    <div id="miss-ranking-bonus"></div>
+                </div>
+            </div>
+
+            <!-- 统计特征 -->
+            <h3 class="section-title">统计特征</h3>
+            <div id="stats-panel" class="stats-grid"></div>
+
+            <div id="analysis-periods-info" style="margin-top:12px;font-size:12px;color:#999;"></div>
+        </div>
+
         <!-- 号码概率 -->
         <div class="panel" id="panel-prob">
             <h2>号码概率总表</h2>

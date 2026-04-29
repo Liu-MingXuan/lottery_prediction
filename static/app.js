@@ -2,6 +2,7 @@ let currentPage = 1;
 const PAGE_SIZE = 20;
 let currentHistoryType = 'ssq';
 let currentCheckType = 'ssq';
+let currentAnalysisType = 'ssq';
 
 // ========== 历史记录 ==========
 
@@ -123,6 +124,146 @@ async function loadProb(type, btn) {
     });
     html += '</table>';
     document.getElementById('prob-table').innerHTML = html;
+}
+
+// ========== 号码分析 ==========
+
+async function runAnalysis() {
+    const period = parseInt(document.getElementById('analysis-period').value) || 0;
+    const btn = document.getElementById('btn-analysis');
+    const status = document.getElementById('analysis-status');
+
+    btn.disabled = true;
+    status.innerHTML = '<span class="loading">分析中</span>';
+
+    try {
+        const res = await fetch(`/api/analysis/${currentAnalysisType}?period=${period}`);
+        const data = await res.json();
+        if (data.error) {
+            status.textContent = data.error;
+            return;
+        }
+        renderAnalysis(data);
+        status.textContent = '分析完成';
+    } catch (e) {
+        status.textContent = '请求失败';
+    } finally {
+        btn.disabled = false;
+        setTimeout(() => { status.textContent = ''; }, 3000);
+    }
+}
+
+function switchAnalysisType(type, btn) {
+    currentAnalysisType = type;
+    document.querySelectorAll('#panel-analysis .tabs .tab').forEach(t => t.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    runAnalysis();
+}
+
+function renderAnalysis(data) {
+    const isSSQ = currentAnalysisType === 'ssq';
+    const mainLabel = isSSQ ? '红区' : '前区';
+    const bonusLabel = isSSQ ? '蓝区' : '后区';
+
+    document.getElementById('prob-main-label').textContent = mainLabel;
+    document.getElementById('prob-bonus-label').textContent = bonusLabel;
+    document.getElementById('miss-main-label').textContent = mainLabel;
+    document.getElementById('miss-bonus-label').textContent = bonusLabel;
+
+    renderProbabilityRanking(data.probabilities);
+    renderMissRanking(data.miss_values);
+    renderHeatmap(data.heatmap);
+    renderStats(data.stats, mainLabel, bonusLabel);
+
+    document.getElementById('analysis-periods-info').textContent =
+        `基于最近 ${data.total_periods} 期数据分析`;
+}
+
+function renderProbabilityRanking(probs) {
+    ['main', 'bonus'].forEach(zone => {
+        const items = probs[zone];
+        let html = '<table><tr><th>排名</th><th>号码</th><th>概率</th><th>柱状图</th></tr>';
+        const maxProb = items.length ? items[0].prob : 1;
+        items.forEach((item, i) => {
+            const barWidth = (item.prob / maxProb * 100).toFixed(1);
+            html += `<tr><td>${i + 1}</td><td><strong>${pad(item.number)}</strong></td><td>${item.prob.toFixed(6)}</td>`;
+            html += `<td><div class="prob-bar" style="width:${barWidth}%"></div></td></tr>`;
+        });
+        html += '</table>';
+        document.getElementById(`prob-ranking-${zone}`).innerHTML = html;
+    });
+}
+
+function renderMissRanking(misses) {
+    ['main', 'bonus'].forEach(zone => {
+        const items = misses[zone];
+        let html = '<table><tr><th>排名</th><th>号码</th><th>遗漏期数</th><th>柱状图</th></tr>';
+        const maxMiss = items.length ? items[0].miss : 1;
+        items.forEach((item, i) => {
+            const barWidth = (item.miss / maxMiss * 100).toFixed(1);
+            const cls = item.miss > maxMiss * 0.6 ? 'miss-bar hot' : item.miss > maxMiss * 0.3 ? 'miss-bar warm' : 'miss-bar cold';
+            html += `<tr><td>${i + 1}</td><td><strong>${pad(item.number)}</strong></td><td>${item.miss}</td>`;
+            html += `<td><div class="${cls}" style="width:${barWidth}%"></div></td></tr>`;
+        });
+        html += '</table>';
+        document.getElementById(`miss-ranking-${zone}`).innerHTML = html;
+    });
+}
+
+function renderHeatmap(heatmap) {
+    ['main', 'bonus'].forEach(zone => {
+        const data = heatmap[zone];
+        const nums = Object.keys(data).map(Number).sort((a, b) => a - b);
+        let html = '';
+        nums.forEach(num => {
+            const cls = data[num];
+            html += `<span class="heatmap-cell ${cls}" title="${pad(num)}: ${cls === 'hot' ? '热号' : cls === 'cold' ? '冷号' : '温号'}">${pad(num)}</span>`;
+        });
+        document.getElementById(`heatmap-${zone}`).innerHTML = html;
+    });
+}
+
+function renderStats(stats, mainLabel, bonusLabel) {
+    const oe = stats.odd_even;
+    const sr = stats.sum_range;
+    const hc = stats.hot_cold;
+    const dist = stats.distribution;
+
+    let html = '';
+
+    // 奇偶比
+    html += '<div class="stat-card">';
+    html += '<div class="stat-title">奇偶比</div>';
+    html += `<div class="stat-body">`;
+    html += `<div>${mainLabel}：历史均值 ${oe.main.history_avg} / 近30期 ${oe.main.recent_avg}</div>`;
+    html += `<div>${bonusLabel}：历史均值 ${oe.bonus.history_avg} / 近30期 ${oe.bonus.recent_avg}</div>`;
+    html += '</div></div>';
+
+    // 求和值
+    html += '<div class="stat-card">';
+    html += '<div class="stat-title">求和值范围</div>';
+    html += '<div class="stat-body">';
+    html += `<div>${mainLabel}：${sr.main.min} ~ ${sr.main.max}（历史均值 ${sr.main.avg}，近30期 ${sr.main.recent_avg}）</div>`;
+    html += `<div>${bonusLabel}：${sr.bonus.min} ~ ${sr.bonus.max}（历史均值 ${sr.bonus.avg}，近30期 ${sr.bonus.recent_avg}）</div>`;
+    html += '</div></div>';
+
+    // 冷热号
+    html += '<div class="stat-card">';
+    html += '<div class="stat-title">冷热号分类</div>';
+    html += '<div class="stat-body">';
+    html += `<div>${mainLabel}：<span class="tag-hot">热号</span> ${hc.main.hot.map(pad).join(' ')}　<span class="tag-warm">温号</span> ${hc.main.warm.map(pad).join(' ')}　<span class="tag-cold">冷号</span> ${hc.main.cold.map(pad).join(' ')}</div>`;
+    html += `<div>${bonusLabel}：<span class="tag-hot">热号</span> ${hc.bonus.hot.map(pad).join(' ')}　<span class="tag-warm">温号</span> ${hc.bonus.warm.map(pad).join(' ')}　<span class="tag-cold">冷号</span> ${hc.bonus.cold.map(pad).join(' ')}</div>`;
+    html += '</div></div>';
+
+    // 分区分布
+    html += '<div class="stat-card">';
+    html += '<div class="stat-title">号码分区分布</div>';
+    html += '<div class="stat-body">';
+    html += `<div>${mainLabel}：低区 ${(dist.main.low * 100).toFixed(1)}% / 中区 ${(dist.main.mid * 100).toFixed(1)}% / 高区 ${(dist.main.high * 100).toFixed(1)}%</div>`;
+    html += `<div>${bonusLabel}：低区 ${(dist.bonus.low * 100).toFixed(1)}% / 中区 ${(dist.bonus.mid * 100).toFixed(1)}% / 高区 ${(dist.bonus.high * 100).toFixed(1)}%</div>`;
+    html += '</div></div>';
+
+    document.getElementById('stats-panel').innerHTML = html;
 }
 
 // ========== 号码查询 ==========
@@ -271,6 +412,7 @@ function pad(n) {
 
 window.addEventListener('DOMContentLoaded', () => {
     loadHistory('ssq');
+    runAnalysis('ssq');
     loadProb('ssq');
     setCheckType('ssq');
 });

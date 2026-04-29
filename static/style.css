@@ -186,3 +186,139 @@ td.num-blue { color: #1677ff; font-weight: 600; }
     vertical-align: middle;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ========== 号码分析面板 ========== */
+
+#btn-analysis {
+    padding: 6px 24px;
+    background: #1677ff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+}
+#btn-analysis:hover { background: #4096ff; }
+#btn-analysis:disabled { background: #95c0ff; cursor: not-allowed; }
+
+.section-title {
+    font-size: 14px;
+    margin: 16px 0 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e8e8e8;
+    color: #333;
+}
+
+/* 热力图 */
+.heatmap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+.heatmap-cell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: default;
+}
+.heatmap-cell.hot {
+    background: #ff4d4f;
+    color: #fff;
+}
+.heatmap-cell.warm {
+    background: #d9d9d9;
+    color: #333;
+}
+.heatmap-cell.cold {
+    background: #1677ff;
+    color: #fff;
+}
+
+/* 双栏表格 */
+.dual-table {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+.table-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1677ff;
+    margin-bottom: 4px;
+}
+
+/* 概率柱状图 */
+.prob-bar {
+    height: 14px;
+    background: linear-gradient(90deg, #1677ff, #69b1ff);
+    border-radius: 2px;
+}
+
+/* 遗漏柱状图 */
+.miss-bar {
+    height: 14px;
+    border-radius: 2px;
+}
+.miss-bar.hot { background: linear-gradient(90deg, #ff4d4f, #ff7875); }
+.miss-bar.warm { background: linear-gradient(90deg, #faad14, #ffd666); }
+.miss-bar.cold { background: linear-gradient(90deg, #52c41a, #95de64); }
+
+/* 统计卡片 */
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+.stat-card {
+    background: #fafbfc;
+    border: 1px solid #e8e8e8;
+    border-radius: 6px;
+    padding: 12px;
+}
+.stat-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin-bottom: 6px;
+}
+.stat-body {
+    font-size: 12px;
+    color: #666;
+    line-height: 1.8;
+}
+
+/* 冷热号标签 */
+.tag-hot {
+    display: inline-block;
+    padding: 1px 6px;
+    background: #ff4d4f;
+    color: #fff;
+    border-radius: 3px;
+    font-size: 11px;
+}
+.tag-warm {
+    display: inline-block;
+    padding: 1px 6px;
+    background: #d9d9d9;
+    color: #333;
+    border-radius: 3px;
+    font-size: 11px;
+}
+.tag-cold {
+    display: inline-block;
+    padding: 1px 6px;
+    background: #1677ff;
+    color: #fff;
+    border-radius: 3px;
+    font-size: 11px;
+}
+
+@media (max-width: 768px) {
+    .dual-table { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: 1fr; }
+}

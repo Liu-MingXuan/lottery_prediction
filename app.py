@@ -8,6 +8,7 @@ from database.db import init_db, get_all_ssq, get_all_dlt, get_conn
 from crawler.ssq import crawl_ssq
 from crawler.dlt import crawl_dlt
 from analysis.predictor import predict_ssq, predict_dlt
+from analysis.analyzer import full_analysis
 
 app = FastAPI(title="彩票预测系统")
 
@@ -30,17 +31,19 @@ SSQ_PRIZE_TABLE = [
 ]
 
 DLT_PRIZE_TABLE = [
-    ((5, 2), "一等奖", "浮动（最高1000万）"),
+    ((5, 2), "一等奖", "浮动（最高500万）"),
     ((5, 1), "二等奖", "浮动"),
-    ((5, 0), "三等奖", "10,000元"),
-    ((4, 2), "四等奖", "3,000元"),
-    ((4, 1), "五等奖", "500元"),
-    ((3, 2), "六等奖", "200元"),
-    ((4, 0), "七等奖", "100元"),
-    ((3, 1), "八等奖", "15元"),
-    ((2, 2), "九等奖", "5元"),
-    ((1, 2), "九等奖", "5元"),
-    ((0, 2), "九等奖", "5元"),
+    ((5, 0), "三等奖", "5,000元"),
+    ((4, 2), "三等奖", "5,000元"),
+    ((4, 1), "四等奖", "300元"),
+    ((4, 0), "五等奖", "150元"),
+    ((3, 2), "五等奖", "150元"),
+    ((3, 1), "六等奖", "15元"),
+    ((2, 2), "六等奖", "15元"),
+    ((3, 0), "七等奖", "5元"),
+    ((2, 1), "七等奖", "5元"),
+    ((1, 2), "七等奖", "5元"),
+    ((0, 2), "七等奖", "5元"),
 ]
 
 
@@ -215,6 +218,29 @@ def check_prize(req: CheckRequest):
 
     conn.close()
     return result
+
+
+@app.get("/api/analysis/{type}")
+def analysis(type: str, period: int = Query(0, description="最近N期，0=全部")):
+    if type == "ssq":
+        records = get_all_ssq()
+        main_keys = ["red1", "red2", "red3", "red4", "red5", "red6"]
+        bonus_keys = ["blue"]
+        main_range = (1, 33)
+        bonus_range = (1, 16)
+    elif type == "dlt":
+        records = get_all_dlt()
+        main_keys = ["front1", "front2", "front3", "front4", "front5"]
+        bonus_keys = ["back1", "back2"]
+        main_range = (1, 35)
+        bonus_range = (1, 12)
+    else:
+        return {"error": "类型无效，请使用 ssq 或 dlt"}
+
+    if not records:
+        return {"error": "暂无历史数据"}
+
+    return full_analysis(records, main_keys, bonus_keys, main_range, bonus_range, period)
 
 
 @app.get("/api/prize-table/{type}")

@@ -60,5 +60,27 @@ password:07381762l.
 2. 体彩:https://www.lottery.gov.cn/kj/kjlb.html?dlt
 如果以上网站不能找到历史数据请自行在网络查找。
 
-## 3 注意事项
+## 3 启动方式
+
+### 3.1 命令行模式
+爬取最新数据 + 概率分析 + 号码预测，结果输出到终端：
+```bash
+source .venv/bin/activate
+python main.py
+```
+可选参数：
+- `-p N` / `--period N`：参考最近 N 期数据（0=全部历史，默认 0）
+- `-c N` / `--count N`：生成预测组数（默认 5）
+
+示例：`python main.py -p 100 -c 10`
+
+### 3.2 Web 模式
+启动 FastAPI 后端，通过浏览器查看历史记录、号码分析、预测结果等：
+```bash
+source .venv/bin/activate
+uvicorn app:app --reload
+```
+启动后访问 `http://127.0.0.1:8000`
+
+## 4 注意事项
 先提供开发流程的详细文档，由我同意后再开始开发，
